@@ -132,12 +132,6 @@
   - name: Setting hostname 
     command: hostnamectl set-hostname k8s-master
 
-  #- name: Configure node ip
-  #  lineinfile:
-  #    path: /etc/default/kubelet
-  #    line: KUBELET_EXTRA_ARGS=--node-ip={{ ansible_host }}
-  #    create: yes
-
   - name: Restart kubelet
     service:
       name: kubelet
@@ -145,7 +139,17 @@
       enabled: yes
       state: restarted
   
-  #- meta: end_play
+  - name: Delete config.toml #because this was hapened "code = Unimplemented desc = unknown service runtime.v1alpha2.ImageService" https://github.com/containerd/containerd/issues/4581
+    file:
+      path: /etc/containerd/config.toml
+      state: absent
+
+  - name: restart the containerd service
+    service:
+      name: containerd
+      daemon_reload: yes
+      enabled: yes
+      state: restarted
 
   - name: Pull container images
     command: kubeadm config images pull
@@ -154,7 +158,7 @@
   - name: Initialize the Kubernetes cluster using kubeadm
     command: kubeadm init --pod-network-cidr=192.168.0.0/16 --upload-certs --node-name k8s-master --control-plane-endpoint={{ ansible_host }}
 
-  #Setup the kube config file for the 'ubuuntu' user to access the Kubernetes cluster using the below code
+  #Setup the kube config file for the 'ubuuntu' user to access the Kubernetes cluster using the code below
   - name: Setup kubeconfig for ubuntu user
     command: "{{ item }}"
     with_items:
@@ -162,7 +166,7 @@
      - cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
      - chown ubuntu:ubuntu /home/ubuntu/.kube/config
   
-  #Setup the container networking provider and the network policy engine using the below code
+  #Setup the container networking provider and the network policy engine using the code below
   - name: Install calico pod network
     become: false
     command: "{{ item }}"

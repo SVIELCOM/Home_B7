@@ -148,6 +148,18 @@
   - name: Copy the join command to server location
     copy: src=join-command dest=/tmp/join-command.sh mode=0777
 
+  - name: Delete config.toml #because this was hapened "code = Unimplemented desc = unknown service runtime.v1alpha2.ImageService" https://github.com/containerd/containerd/issues/4581
+    file:
+      path: /etc/containerd/config.toml
+      state: absent
+
+  - name: restart the containerd service
+    service:
+      name: containerd
+      daemon_reload: yes
+      enabled: yes
+      state: restarted
+
   - name: Join the node to cluster
     command: sh /tmp/join-command.sh
  

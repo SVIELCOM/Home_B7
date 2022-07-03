@@ -1,1 +1,1 @@
-kubeadm join 62.84.127.134:6443 --token 4fgtoa.692jx3bn6jjos235 --discovery-token-ca-cert-hash sha256:000700eed6b1c84f816ec149ac7316ea8c1ce851fbb40c4bd9cc8026b88ea3ff 
+kubeadm join 51.250.87.224:6443 --token wfjuzr.s62eqeqjwa6r138m --discovery-token-ca-cert-hash sha256:8e2f47057ac816e39e54cf725b2d2daeaf77636c08cf84c642c4c5b63d5718f4 

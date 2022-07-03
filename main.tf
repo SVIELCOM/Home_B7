@@ -2,7 +2,7 @@ terraform {
   required_providers {
     yandex = {
       source  = "yandex-cloud/yandex"
-      version = "0.68.0"
+      version = "0.75.0"
     }
   }
 }
@@ -20,7 +20,7 @@ resource "yandex_compute_instance" "node1" {
   resources {
     cores         = 2
     memory        = 4
-    core_fraction = 20
+    core_fraction = 100 #must be 100 to avoid Kubernetes cluster initialization errors
   }
 
   scheduling_policy {
@@ -30,7 +30,7 @@ resource "yandex_compute_instance" "node1" {
   boot_disk {
     initialize_params {
       # ubuntu 20-04
-      image_id = "ubuntu-20-04-lts-v20220620"
+      image_id = "fd8f1tik9a7ap9ik2dg1"
       size     = 20
       type     = "network-ssd"
     }
@@ -63,7 +63,7 @@ resource "yandex_compute_instance" "node2" {
   boot_disk {
     initialize_params {
       # ubuntu 20-04
-      image_id = "ubuntu-20-04-lts-v20220620"
+      image_id = "fd8f1tik9a7ap9ik2dg1"
       size     = 20
       type     = "network-hdd"
     }
