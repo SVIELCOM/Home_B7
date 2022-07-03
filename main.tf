@@ -8,18 +8,19 @@ terraform {
 }
 
 provider "yandex" {
-  service_account_key_file = "./keys/yandex/myserviceaccount-key.json"
+  service_account_key_file = "./keys/yandex/key.json"
   cloud_id                 = "b1gm927ukaa70tqajugl"
   folder_id                = "b1gc6voj6kklco2mpnnn"
   zone                     = "ru-central1-a"
 }
 
 resource "yandex_compute_instance" "node1" {
-  name = "node1"
+  name        = "node1"
+  platform_id = "standard-v3"
   resources {
     cores         = 2
     memory        = 4
-    core_fraction = 100
+    core_fraction = 20
   }
 
   scheduling_policy {
@@ -29,8 +30,9 @@ resource "yandex_compute_instance" "node1" {
   boot_disk {
     initialize_params {
       # ubuntu 20-04
-      image_id = "fd8vgqmrilk8dchj1ccf"
-      size     = 40
+      image_id = "ubuntu-20-04-lts-v20220620"
+      size     = 20
+      type     = "network-ssd"
     }
   }
 
@@ -46,11 +48,12 @@ resource "yandex_compute_instance" "node1" {
 }
 
 resource "yandex_compute_instance" "node2" {
-  name = "node2"
+  name        = "node2"
+  platform_id = "standard-v3"
   resources {
     cores         = 2
-    memory        = 4
-    core_fraction = 100
+    memory        = 2
+    core_fraction = 20
   }
 
   scheduling_policy {
@@ -60,8 +63,9 @@ resource "yandex_compute_instance" "node2" {
   boot_disk {
     initialize_params {
       # ubuntu 20-04
-      image_id = "fd8vgqmrilk8dchj1ccf"
-      size     = 40
+      image_id = "ubuntu-20-04-lts-v20220620"
+      size     = 20
+      type     = "network-hdd"
     }
   }
 
