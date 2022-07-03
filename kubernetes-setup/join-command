@@ -1,1 +1,0 @@
-kubeadm join 51.250.87.224:6443 --token wfjuzr.s62eqeqjwa6r138m --discovery-token-ca-cert-hash sha256:8e2f47057ac816e39e54cf725b2d2daeaf77636c08cf84c642c4c5b63d5718f4 
