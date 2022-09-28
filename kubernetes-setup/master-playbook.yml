@@ -153,35 +153,42 @@
 
   - name: Pull container images
     command: kubeadm config images pull
+    tags: k8s_init
+
+  - name: Reset exist Kubernetes cluster
+    command: kubeadm reset --force
+    tags: k8s_init
 
 #Initialize the Kubernetes cluster with kubeadm using the below code
   - name: Initialize the Kubernetes cluster using kubeadm
-    command: kubeadm init --pod-network-cidr=192.168.0.0/16 --upload-certs --node-name k8s-master --control-plane-endpoint={{ ansible_host }}
+    command: kubeadm init --pod-network-cidr=10.244.0.0/16 --upload-certs --node-name k8s-master --control-plane-endpoint={{ ansible_host }}
+    tags: k8s_init
 
   #Setup the kube config file for the 'ubuuntu' user to access the Kubernetes cluster using the code below
   - name: Setup kubeconfig for ubuntu user
     command: "{{ item }}"
     with_items:
-     - mkdir -p /home/ubuntu/.kube
-     - cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
-     - chown ubuntu:ubuntu /home/ubuntu/.kube/config
+      - mkdir -p /home/ubuntu/.kube
+      - cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
+      - chown ubuntu:ubuntu /home/ubuntu/.kube/config
+    tags: k8s_init 
   
-  #Setup the container networking provider and the network policy engine using the code below
-  - name: Install calico pod network
+  #Setup the container networking provider
+  - name: Install flannel
     become: false
-    command: "{{ item }}"
-    with_items:
-     - kubectl create -f https://docs.projectcalico.org/manifests/tigera-operator.yaml 
-     - kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.yaml
+    command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+    tags: k8s_init 
 
   #Generate kube join command for joining the node to the Kubernetes cluster and store the command in the file named join-command
   - name: Generate join command
     command: kubeadm token create --print-join-command
     register: join_command
+    tags: k8s_init
 
   - name: Copy join command to local file
     become: false
     local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
+    tags: k8s_init
 
   - name: Copy config file
     ansible.builtin.fetch:
@@ -189,7 +196,8 @@
         dest: "{{ lookup('env', 'HOME') }}/.kube/config"
         flat: yes
     run_once: yes
-    ignore_errors: yes    
+    ignore_errors: yes
+    tags: k8s_init 
 
   #Setup a handler for checking Docker daemon using the below code.
   handlers:
