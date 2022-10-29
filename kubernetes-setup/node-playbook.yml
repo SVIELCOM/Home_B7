@@ -41,7 +41,7 @@
         - docker-ce-cli
         - containerd.io
     notify:
-      - docker status
+      - Docker status
 
   - name: Add ubuntu user to docker group
     ansible.builtin.user:
@@ -156,8 +156,8 @@
   - name: Copy the join command to server location
     ansible.builtin.copy:
       src: join-command
-      dest: /tmp/join-command.sh mode=0777
-      mode: 0666
+      dest: /tmp/join-command.sh
+      mode: 0766
 
   - name: Delete config.toml # because this was hapened "code = Unimplemented desc = unknown service runtime.v1alpha2.ImageService"
   # https://github.com/containerd/containerd/issues/4581

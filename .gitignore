@@ -4,3 +4,5 @@ terraform.tfstate
 terraform.tfstate.backup
 keys/
 join-command*
+.vscode/settings.json
+inventory

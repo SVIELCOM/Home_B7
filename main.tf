@@ -18,7 +18,7 @@ resource "yandex_compute_instance" "node1" {
   name        = "node1"
   platform_id = "standard-v3"
   resources {
-    cores         = 2
+    cores         = 4
     memory        = 4
     core_fraction = 100 #must be 100 to avoid Kubernetes cluster initialization errors
   }
@@ -51,8 +51,8 @@ resource "yandex_compute_instance" "node2" {
   name        = "node2"
   platform_id = "standard-v3"
   resources {
-    cores         = 2
-    memory        = 2
+    cores         = 4
+    memory        = 4
     core_fraction = 100
   }
 

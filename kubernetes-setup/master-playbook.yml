@@ -41,7 +41,7 @@
         - docker-ce-cli
         - containerd.io
     notify:
-      - docker status
+      - Docker status
 
   - name: Add ubuntu user to docker group
     ansible.builtin.user:
@@ -181,14 +181,21 @@
     tags: k8s_init
 
     # Setup the kube config file for the 'ubuuntu' user to access the Kubernetes cluster using the code below
-  - name: Setup kubeconfig for ubuntu user
-    ansible.builtin.command: "{{ item }}"
-    with_items:
-      - mkdir -p /home/ubuntu/.kube
-      - cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
-      - chown ubuntu:ubuntu /home/ubuntu/.kube/config
-    register: my_output # <- Registers the command output.
-    changed_when: my_output.rc != 0 # <- Uses the return code to define when the task has changed.
+  - name: Setup kubeconfig for ubuntu user (create dir)
+    ansible.builtin.file:
+      path: /home/ubuntu/.kube
+      state: directory
+      owner: ubuntu
+      mode: 0777
+    tags: k8s_init
+
+  - name: Setup kubeconfig for ubuntu user (copy config to remote directory)
+    ansible.builtin.copy:
+      src: /etc/kubernetes/admin.conf
+      dest: /home/ubuntu/.kube/config
+      owner: ubuntu
+      mode: 0666
+      remote_src: true
     tags: k8s_init
 
     # Setup the container networking provider
@@ -208,10 +215,15 @@
 
   - name: Copy join command to local file
     become: false
-    ansible.builtin.command: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
+    ansible.builtin.copy:
+      content:
+        "{{ join_command.stdout_lines[0] }}"
+      dest: ./join-command
+      mode: 0666
     delegate_to: localhost
-    register: my_output # <- Registers the command output.
-    changed_when: my_output.rc != 0 # <- Uses the return code to define when the task has changed.
+
+    # register: my_output # <- Registers the command output.
+    # changed_when: my_output.rc != 0 # <- Uses the return code to define when the task has changed.
     tags: k8s_init
 
   - name: Copy config file

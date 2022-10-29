@@ -1,8 +1,8 @@
 [master]
-master_node ansible_host=51.250.66.185
+master_node ansible_host=178.154.223.36
 
 [node]
-worker_node ansible_host=84.201.128.145
+worker_node ansible_host=178.154.225.122
 
 [all:vars]
 ansible_user = ubuntu
