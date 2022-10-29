@@ -1,57 +1,59 @@
 ---
 
-- hosts: node
+- name: Creatin a node
+  hosts: node
   become: true
   become_user: root
   tasks:
 
   # Install Docker and its dependent components.
   - name: Install packages that allow apt to be used over HTTPS
-    apt:
+    ansible.builtin.apt:
       name: "{{ packages }}"
       state: present
-      update_cache: yes
+      update_cache: true
     vars:
       packages:
-      - apt-transport-https
-      - ca-certificates
-      - curl
-      - gnupg-agent
-      - software-properties-common
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg-agent
+        - software-properties-common
 
   - name: Add an apt signing key for Docker
-    apt_key:
+    ansible.builtin.apt_key:
       url: https://download.docker.com/linux/ubuntu/gpg
       state: present
 
   - name: Add apt repository for stable version of docker
-    apt_repository:
+    ansible.builtin.apt_repository:
       repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
       state: present
 
   - name: Install docker and its dependecies
-    apt: 
+    ansible.builtin.apt:
       name: "{{ packages }}"
       state: present
-      update_cache: yes
+      update_cache: true
     vars:
       packages:
-      - docker-ce 
-      - docker-ce-cli 
-      - containerd.io
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
     notify:
       - docker status
 
   - name: Add ubuntu user to docker group
-    user:
+    ansible.builtin.user:
       name: ubuntu
       group: docker
-  
+
   - name: Create docker daemon json config file
-    lineinfile:
+    ansible.builtin.lineinfile:
       path: /etc/docker/daemon.json
       line: "{{ item }}"
-      create: yes
+      create: true
+      mode: 0666
     with_items:
       - '{'
       - '   "exec-opts": ["native.cgroupdriver=systemd"],'
@@ -61,18 +63,17 @@
       - '    },'
       - '   "storage-driver": "overlay2"'
       - '}'
-    
 
   - name: Restart docker
-    service:
+    ansible.builtin.service:
       name: docker
-      enabled: yes
-      daemon_reload: yes
-      state: restarted 
+      enabled: true
+      daemon_reload: true
+      state: restarted
 
-  #Kubelet will not start if the system has swap enabled, so we are disabling swap using the below code
+  # Kubelet will not start if the system has swap enabled, so we are disabling swap using the below code
   - name: Remove swapfile from /etc/fstab
-    mount:
+    ansible.posix.mount:
       name: "{{ item }}"
       fstype: swap
       state: absent
@@ -81,91 +82,104 @@
       - none
 
   - name: Disable swap
-    command: swapoff -a
+    ansible.builtin.command: swapoff -a
     when: ansible_swaptotal_mb > 0
 
   - name: Set bridge-nf-call settings
-    command: "{{ item }}"
+    ansible.builtin.command: "{{ item }}"
     with_items:
-    - modprobe overlay
-    - modprobe bridge
-    - modprobe br_netfilter
+      - modprobe overlay
+      - modprobe bridge
+      - modprobe br_netfilter
+    register: my_output # <- Registers the command output.
+    changed_when: my_output.rc != 0 # <- Uses the return code to define when the task has changed.
 
   - name: Configure sysctl
-    lineinfile:
+    ansible.builtin.lineinfile:
       path: /etc/sysctl.d/kubernetes.conf
       line: "{{ item }}"
-      create: yes 
+      create: true
+      mode: 0666
     with_items:
       - 'net.bridge.bridge-nf-call-iptables = 1'
       - 'net.bridge.bridge-nf-call-ip6tables = 1'
       - 'net.ipv4.ip_forward = 1'
-     
+
 
   - name: Restart sysctl
-    command: sudo sysctl --system
+    ansible.builtin.command: sudo sysctl --system
+    register: my_output # <- Registers the command output.
+    changed_when: my_output.rc != 0 # <- Uses the return code to define when the task has changed.
 
-  #Installing kubelet, kubeadm and kubectl using the below code
+  # Installing kubelet, kubeadm and kubectl using the below code
   - name: Add an apt signing key for Kubernetes
-    apt_key:
+    ansible.builtin.apt_key:
       url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
       state: present
 
   - name: Adding apt repository for Kubernetes
-    apt_repository:
+    ansible.builtin.apt_repository:
       repo: deb [arch=amd64] https://apt.kubernetes.io/ kubernetes-xenial main
       state: present
       filename: kubernetes.list
 
   - name: Install Kubernetes binaries
-    apt: 
+    ansible.builtin.apt:
       name: "{{ packages }}"
       state: present
-      update_cache: yes
+      update_cache: true
     vars:
       packages:
-        - kubelet 
-        - kubeadm 
+        - kubelet
+        - kubeadm
         - kubectl
         - kubernetes-cni
 
-  - name: Setting hostname 
-    command: hostnamectl set-hostname k8s-worker
+  - name: Setting hostname
+    ansible.builtin.command: hostnamectl set-hostname k8s-worker
+    register: my_output # <- Registers the command output.
+    changed_when: my_output.rc != 0 # <- Uses the return code to define when the task has changed.
 
-  #- name: Configure node ip
-  #  lineinfile:
-  #    path: /etc/default/kubelet
-  #    line: KUBELET_EXTRA_ARGS=--node-ip={{ ansible_host }}
-  #    create: yes
+  # -  name: Configure node ip
+  #   lineinfile:
+  #      path: /etc/default/kubelet
+  #      line: KUBELET_EXTRA_ARGS=--node-ip={{ ansible_host }}
+  #      create: yes
 
   - name: Restart kubelet
-    service:
+    ansible.builtin.service:
       name: kubelet
-      daemon_reload: yes
-      enabled: yes
+      daemon_reload: true
+      enabled: true
       state: restarted
-  
-  - name: Copy the join command to server location
-    copy: src=join-command dest=/tmp/join-command.sh mode=0777
 
-  - name: Delete config.toml #because this was hapened "code = Unimplemented desc = unknown service runtime.v1alpha2.ImageService" https://github.com/containerd/containerd/issues/4581
-    file:
+  - name: Copy the join command to server location
+    ansible.builtin.copy:
+      src: join-command
+      dest: /tmp/join-command.sh mode=0777
+      mode: 0666
+
+  - name: Delete config.toml # because this was hapened "code = Unimplemented desc = unknown service runtime.v1alpha2.ImageService"
+  # https://github.com/containerd/containerd/issues/4581
+    ansible.builtin.file:
       path: /etc/containerd/config.toml
       state: absent
 
-  - name: restart the containerd service
-    service:
+  - name: Restart the containerd service
+    ansible.builtin.service:
       name: containerd
-      daemon_reload: yes
-      enabled: yes
+      daemon_reload: true
+      enabled: true
       state: restarted
 
   - name: Join the node to cluster
-    command: sh /tmp/join-command.sh
- 
-  #Setup a handler for checking Docker daemon using the below code.
-  handlers:
-    - name: docker status
-      service: name=docker state=started
+    ansible.builtin.command: sh /tmp/join-command.sh
+    register: my_output # <- Registers the command output.
+    changed_when: my_output.rc != 0 # <- Uses the return code to define when the task has changed.
 
-  
+  # Setup a handler for checking Docker daemon using the below code.
+  handlers:
+    - name: Docker status
+      ansible.builtin.service:
+        name: docker
+        state: started
