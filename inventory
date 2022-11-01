@@ -1,8 +1,8 @@
 [master]
-master_node ansible_host=178.154.223.36
+master_node ansible_host=k8s-master.svielcom.ru
 
 [node]
-worker_node ansible_host=178.154.225.122
+worker_node ansible_host=k8s-worker.svielcom.ru
 
 [all:vars]
 ansible_user = ubuntu

@@ -86,8 +86,8 @@ data "template_file" "inventory" {
 
   vars = {
     user  = "ubuntu"
-    host1 = join("", [yandex_compute_instance.node1.network_interface[0].nat_ip_address])
-    host2 = join("", [yandex_compute_instance.node2.network_interface[0].nat_ip_address])
+    host1 = "k8s-master.svielcom.ru"
+    host2 = "k8s-worker.svielcom.ru"
   }
 }
 
@@ -95,3 +95,36 @@ resource "local_file" "save_inventory" {
   content  = data.template_file.inventory.rendered
   filename = "./inventory"
 }
+
+resource "yandex_dns_recordset" "rs1" {
+  zone_id = "dnsebj4b7b4lgrscdiqf"
+  name    = "k8s-master.svielcom.ru."
+  type    = "A"
+  ttl     = 200
+  data    = [yandex_compute_instance.node1.network_interface[0].nat_ip_address]
+}
+
+resource "yandex_dns_recordset" "rs2" {
+  zone_id = "dnsebj4b7b4lgrscdiqf"
+  name    = "k8s-worker.svielcom.ru."
+  type    = "A"
+  ttl     = 200
+  data    = [yandex_compute_instance.node2.network_interface[0].nat_ip_address]
+}
+
+resource "yandex_dns_recordset" "rs1local" {
+  zone_id = "dnsegj1k94sca91qdfbc"
+  name    = "k8s-master.svielcom.ru."
+  type    = "A"
+  ttl     = 200
+  data    = [yandex_compute_instance.node1.network_interface[0].ip_address]
+}
+
+resource "yandex_dns_recordset" "rs2local" {
+  zone_id = "dnsegj1k94sca91qdfbc"
+  name    = "k8s-worker.svielcom.ru."
+  type    = "A"
+  ttl     = 200
+  data    = [yandex_compute_instance.node2.network_interface[0].ip_address]
+}
+

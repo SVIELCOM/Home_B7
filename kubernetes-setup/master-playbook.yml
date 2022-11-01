@@ -136,7 +136,7 @@
         - kubernetes-cni
 
   - name: Setting hostname
-    ansible.builtin.command: hostnamectl set-hostname k8s-master
+    ansible.builtin.command: hostnamectl set-hostname k8s-master.svielcom.ru
     register: my_output # <- Registers the command output.
     changed_when: my_output.rc != 0 # <- Uses the return code to define when the task has changed.
 
